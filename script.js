@@ -754,30 +754,51 @@ $("#profileNextLevelPoints").textContent =
 
   /* ---------------- Impact dashboard ---------------- */
   let impactAnimated = false;
-  function renderImpact() {
-    const chart = $("#impactBarChart");
-    chart.innerHTML = "";
-    IMPACT_CHART.forEach(row => {
-      const r = document.createElement("div");
-      r.className = "barchart__row";
-      r.innerHTML = `
-        <span class="barchart__label">${row.label}</span>
-        <div class="barchart__track"><div class="barchart__fill" data-pct="${row.pct}"></div></div>
-        <span class="barchart__pct">${row.pct}%</span>
-      `;
-      chart.appendChild(r);
-    });
-    requestAnimationFrame(() => {
-      $$(".barchart__fill").forEach(f => { f.style.width = f.dataset.pct + "%"; });
-    });
+  
+async function renderImpact() {
+  const studentEl = $("#impactStudentCount");
+  const missionEl = $("#impactMissionCount");
+  const chart = $("#impactBarChart");
 
-    if (!impactAnimated) {
-      impactAnimated = true;
-      $$(".impact-stat__value").forEach(el => animateCount(el, parseInt(el.dataset.count, 10)));
-    } else {
-      $$(".impact-stat__value").forEach(el => { el.textContent = el.dataset.count; });
-    }
+  // แสดงสถานะระหว่างโหลด
+  studentEl.textContent = "…";
+  missionEl.textContent = "…";
+  chart.textContent = "กำลังเตรียมข้อมูล...";
+
+  // ดึงข้อมูลสรุปจาก Supabase
+  const { data, error } = await supabaseClient
+    .rpc("get_impact_summary");
+
+  if (error) {
+    console.error("โหลด Impact Dashboard ไม่สำเร็จ:", error);
+
+    studentEl.textContent = "—";
+    missionEl.textContent = "—";
+    chart.textContent = "ไม่สามารถโหลดข้อมูลได้";
+
+    return;
   }
+
+  if (!data || data.length === 0) {
+    studentEl.textContent = "0";
+    missionEl.textContent = "0";
+    chart.textContent = "ยังไม่มีข้อมูล";
+    return;
+  }
+
+  const summary = data[0];
+
+  // แสดงข้อมูลจริง
+  studentEl.textContent =
+    Number(summary.student_count).toLocaleString("th-TH");
+
+  missionEl.textContent =
+    Number(summary.approved_mission_count).toLocaleString("th-TH");
+
+  // กราฟรอข้อมูลหมวดหมู่จริง
+  chart.textContent =
+    "กราฟจะพร้อมเมื่อระบบจัดหมวดหมู่ภารกิจเรียบร้อย 🌱";
+}
 
   function animateCount(el, target) {
     const duration = 900;
