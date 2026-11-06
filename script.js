@@ -725,7 +725,7 @@ async function loadMissionsFromSupabase() {
       submitButton.disabled = false;
       submitButton.textContent = "ส่งภารกิจ 🎉";
     }
-  });;
+  });
 
   $("#missionSuccessConfirm").addEventListener("click", () => {
     clearSubmitPreviews();
