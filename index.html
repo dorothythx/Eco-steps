@@ -276,13 +276,19 @@
 <div class="modal-backdrop" id="productModal">
   <div class="modal">
     <button class="modal__close" data-close="productModal">✕</button>
-    <div class="modal__product-img" id="productModalImg">🛍️</div>
+    <div class="product-gallery" id="productModalGallery"></div>
     <h2 id="productModalName">สินค้า</h2>
     <p id="productModalDesc" class="muted"></p>
     <div class="modal__price" id="productModalPrice">0 บาท</div>
     <p class="modal__note">* Demo เท่านั้น ไม่มีระบบชำระเงินจริง</p>
     <button class="btn btn--outline btn--block" data-close="productModal">ปิดหน้าต่าง</button>
   </div>
+</div>
+
+
+<div class="modal-backdrop product-image-zoom" id="productImageZoom">
+  <button class="product-image-zoom__close" type="button" aria-label="ปิดภาพขยาย" onclick="document.getElementById('productImageZoom').classList.remove('show')">✕</button>
+  <img id="productImageZoomImg" src="" alt="ภาพสินค้าขนาดใหญ่">
 </div>
 
 <div class="modal-backdrop" id="resetModal">
