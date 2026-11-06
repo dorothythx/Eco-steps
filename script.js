@@ -414,7 +414,7 @@ async function ensureProfile() {
     const trail = $("#heroTrail");
     trail.innerHTML = "";
     const total = 12;
-    const filled = Math.min(total, Math.round((getProgressInLevel(state.points) / POINTS_PER_LEVEL) * total));
+    const filled = Math.min(total, Math.round((getProgressInLevel(getDisplayPoints()) / POINTS_PER_LEVEL) * total));
     for (let i = 0; i < total; i++) {
       const dot = document.createElement("span");
       dot.className = "step-dot" + (i < filled ? " filled" : "");
@@ -668,7 +668,7 @@ async function loadMissionsFromSupabase() {
   function renderRewards() {
     const grid = $("#rewardGrid");
     grid.innerHTML = "";
-    const lvl = getLevel(state.points);
+    const lvl = getLevel(getDisplayPoints());
     REWARDS.forEach(r => {
       const unlocked = r.level <= lvl;
       const el = document.createElement("div");
