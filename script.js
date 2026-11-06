@@ -331,7 +331,14 @@ async function ensureProfile() {
 
   const pages = $$(".page");
   const navBtns = $$("[data-nav]");
-  const submitCtx = { missionId: null, beforeData: null, afterData: null, isSubmitting: false };
+  const submitCtx = {
+    missionId: null,
+    beforeFile: null,
+    afterFile: null,
+    beforePreviewUrl: null,
+    afterPreviewUrl: null,
+    isSubmitting: false
+  };
 
   /* ---------------- Routing ---------------- */
   function navigate(pageName, opts) {
@@ -561,11 +568,19 @@ async function loadMissionsFromSupabase() {
 }
 
   /* ---------------- Submit mission ---------------- */
+  function clearSubmitPreviews() {
+    ["beforePreviewUrl", "afterPreviewUrl"].forEach((key) => {
+      if (submitCtx[key]) URL.revokeObjectURL(submitCtx[key]);
+      submitCtx[key] = null;
+    });
+  }
+
   function renderSubmit(missionId) {
     const mission = MISSIONS.find(m => m.id === missionId) || MISSIONS[0];
+    clearSubmitPreviews();
     submitCtx.missionId = mission.id;
-    submitCtx.beforeData = null;
-    submitCtx.afterData = null;
+    submitCtx.beforeFile = null;
+    submitCtx.afterFile = null;
     submitCtx.isSubmitting = false;
     submitButton.disabled = false;
     submitButton.textContent = "ส่งภารกิจ 🎉";
@@ -574,28 +589,49 @@ async function loadMissionsFromSupabase() {
     $("#submitDesc").textContent = mission.desc;
     $("#missionDesc").value = "";
 
-    const beforeInput = $("#beforeImg");
-    const afterInput = $("#afterImg");
-    beforeInput.value = "";
-    afterInput.value = "";
+    $("#beforeImg").value = "";
+    $("#afterImg").value = "";
     $("#beforePreview").innerHTML = `<span class="preview__placeholder">ยังไม่มีรูป</span>`;
     $("#afterPreview").innerHTML = `<span class="preview__placeholder">ยังไม่มีรูป</span>`;
   }
 
-  function handleImagePreview(inputEl, previewEl, key) {
+  function handleImagePreview(inputEl, previewEl, fileKey, urlKey) {
     inputEl.addEventListener("change", () => {
       const file = inputEl.files && inputEl.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        submitCtx[key] = e.target.result;
-        previewEl.innerHTML = `<img src="${e.target.result}" alt="ตัวอย่างรูปภาพ">`;
-      };
-      reader.readAsDataURL(file);
+      if (!file) {
+        submitCtx[fileKey] = null;
+        return;
+      }
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        alert("รองรับเฉพาะไฟล์ JPG, PNG และ WEBP");
+        inputEl.value = "";
+        submitCtx[fileKey] = null;
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
+        inputEl.value = "";
+        submitCtx[fileKey] = null;
+        return;
+      }
+
+      if (submitCtx[urlKey]) URL.revokeObjectURL(submitCtx[urlKey]);
+      submitCtx[fileKey] = file;
+      submitCtx[urlKey] = URL.createObjectURL(file);
+
+      previewEl.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = submitCtx[urlKey];
+      img.alt = "ตัวอย่างรูปภาพ";
+      previewEl.appendChild(img);
     });
   }
-  handleImagePreview($("#beforeImg"), $("#beforePreview"), "beforeData");
-  handleImagePreview($("#afterImg"), $("#afterPreview"), "afterData");
+
+  handleImagePreview($("#beforeImg"), $("#beforePreview"), "beforeFile", "beforePreviewUrl");
+  handleImagePreview($("#afterImg"), $("#afterPreview"), "afterFile", "afterPreviewUrl");
 
   const submitForm = $("#submitForm");
   const submitButton = $("#submitMissionBtn");
@@ -611,7 +647,6 @@ async function loadMissionsFromSupabase() {
     e.preventDefault();
 
     if (submitCtx.isSubmitting) return;
-
     if (!submitCtx.missionId) {
       alert("กรุณาเลือกภารกิจก่อนส่ง");
       return;
@@ -623,27 +658,52 @@ async function loadMissionsFromSupabase() {
 
     try {
       const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-
       if (sessionError || !sessionData.session) {
-        alert("ไม่พบผู้ใช้งาน กรุณาเข้าสู่ระบบก่อนส่งภารกิจ");
         const loginScreen = document.getElementById("loginScreen");
         if (loginScreen) loginScreen.style.display = "";
-        submitCtx.isSubmitting = false;
-        submitButton.disabled = false;
-        submitButton.textContent = "ส่งภารกิจ 🎉";
-        return;
+        throw new Error("ไม่พบผู้ใช้งาน กรุณาเข้าสู่ระบบก่อนส่งภารกิจ");
       }
 
       const userId = sessionData.session.user.id;
+      const submissionId = crypto.randomUUID();
       const description = $("#missionDesc")?.value?.trim() || "";
+      const bucket = supabaseClient.storage.from("submission-evidence");
 
+      const extensionFor = (file) => ({
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp"
+      }[file.type]);
+
+      const uploadEvidence = async (file, label) => {
+        if (!file) return "";
+        const extension = extensionFor(file);
+        if (!extension || file.size > 5 * 1024 * 1024) {
+          throw new Error("ไฟล์รูปภาพไม่ถูกต้อง หรือมีขนาดเกิน 5 MB");
+        }
+
+        const path = `${userId}/${submissionId}/${label}.${extension}`;
+        const { error } = await bucket.upload(path, file, {
+          contentType: file.type,
+          upsert: false
+        });
+        if (error) throw error;
+        return path;
+      };
+
+      submitButton.textContent = "กำลังอัปโหลดรูปภาพ…";
+      const beforePath = await uploadEvidence(submitCtx.beforeFile, "before");
+      const afterPath = await uploadEvidence(submitCtx.afterFile, "after");
+
+      submitButton.textContent = "กำลังบันทึกข้อมูล…";
       const { data, error } = await supabaseClient
         .from("submissions")
         .insert({
+          id: submissionId,
           user_id: userId,
           mission_id: submitCtx.missionId,
-          before_image: submitCtx.beforeData || "",
-          after_image: submitCtx.afterData || "",
+          before_image: beforePath,
+          after_image: afterPath,
           description,
           status: "pending"
         })
@@ -653,7 +713,6 @@ async function loadMissionsFromSupabase() {
       if (error) throw error;
 
       console.log("ส่งภารกิจเข้า Supabase สำเร็จ:", data);
-
       const message = missionThanksMessages[
         Math.floor(Math.random() * missionThanksMessages.length)
       ];
@@ -661,18 +720,19 @@ async function loadMissionsFromSupabase() {
       openModal("missionSuccessPopup");
     } catch (error) {
       console.error("ส่งภารกิจไม่สำเร็จ:", error);
-      alert("ส่งภารกิจไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
+      alert("ส่งภารกิจไม่สำเร็จ: " + (error.message || "กรุณาลองใหม่"));
       submitCtx.isSubmitting = false;
       submitButton.disabled = false;
       submitButton.textContent = "ส่งภารกิจ 🎉";
     }
-  });
+  });;
 
   $("#missionSuccessConfirm").addEventListener("click", () => {
+    clearSubmitPreviews();
     submitCtx.isSubmitting = false;
     submitCtx.missionId = null;
-    submitCtx.beforeData = null;
-    submitCtx.afterData = null;
+    submitCtx.beforeFile = null;
+    submitCtx.afterFile = null;
     submitForm.reset();
     submitButton.disabled = false;
     submitButton.textContent = "ส่งภารกิจ 🎉";
@@ -763,9 +823,14 @@ async function loadMissionsFromSupabase() {
         $("#profileClass").textContent = "ชั้น " + currentProfile.class_name;
       }
       const studentCodeEl = $("#profileStudentCode");
-      if (studentCodeEl && currentProfile.student_code) {
-        studentCodeEl.textContent = "รหัสนักเรียน: " + currentProfile.student_code;
+      if (studentCodeEl) {
+        studentCodeEl.textContent = currentProfile.student_code
+          ? "รหัสนักเรียน: " + currentProfile.student_code
+          : "ยังไม่มีรหัสนักเรียน";
       }
+    } else {
+      const studentCodeEl = $("#profileStudentCode");
+      if (studentCodeEl) studentCodeEl.textContent = "ยังไม่มีข้อมูลรหัสนักเรียน";
     }
 
     // --- คะแนน: ใช้ profiles.points จาก Supabase เป็นหลัก (ไม่ใช่คะแนน Demo เดิม) ---
