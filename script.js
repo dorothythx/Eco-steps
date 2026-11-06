@@ -170,11 +170,11 @@ async function ensureProfile() {
   };
 
   const PRODUCTS = [
-    { id: "bottle", image: "assets/products/bottle.jpg", name: "แก้วน้ำรักษ์โลก", price: 199, desc: "แก้วน้ำสแตนเลสรักษ์โลก เก็บความเย็นได้นาน ลดการใช้ขวดพลาสติก" },
-    { id: "totebag", image: "assets/products/totebag.jpg", name: "ถุงผ้า", price: 129, desc: "ถุงผ้าดีไซน์น่ารัก ใช้แทนถุงพลาสติกได้ทุกโอกาส" },
-    { id: "lunchbox", image: "assets/products/lunchbox.jpg", name: "กล่องอาหาร", price: 249, desc: "กล่องอาหารรักษ์โลก ปลอดสาร ใช้ซ้ำได้นาน" },
-    { id: "shirt", image: "assets/products/shirt.jpg", name: "เสื้อผ้าสไตล์น่ารัก", price: 350, desc: "เสื้อยืดลายเอกลักษณ์ Eco Steps ผลิตจากผ้าฝ้ายรักษ์โลก" },
-    { id: "notebook", image: "assets/products/notebook.jpg", name: "สมุดรีไซเคิล", price: 59, desc: "สมุดทำจากกระดาษรีไซเคิล 100% เป็นมิตรกับสิ่งแวดล้อม" },
+    { id: "bottle", images: ["assets/products/bottle.jpg"], name: "แก้วน้ำรักษ์โลก", price: 199, desc: "แก้วน้ำสแตนเลสรักษ์โลก เก็บความเย็นได้นาน ลดการใช้ขวดพลาสติก" },
+    { id: "totebag", images: ["assets/products/totebag.jpg"], name: "ถุงผ้า", price: 129, desc: "ถุงผ้าดีไซน์น่ารัก ใช้แทนถุงพลาสติกได้ทุกโอกาส" },
+    { id: "lunchbox", images: ["assets/products/lunchbox.jpg"], name: "กล่องอาหาร", price: 249, desc: "กล่องอาหารรักษ์โลก ปลอดสาร ใช้ซ้ำได้นาน" },
+    { id: "shirt", images: ["assets/products/shirt.jpg"], name: "เสื้อผ้าสไตล์น่ารัก", price: 350, desc: "เสื้อยืดลายเอกลักษณ์ Eco Steps ผลิตจากผ้าฝ้ายรักษ์โลก" },
+    { id: "notebook", images: ["assets/products/notebook.jpg"], name: "สมุดรีไซเคิล", price: 59, desc: "สมุดทำจากกระดาษรีไซเคิล 100% เป็นมิตรกับสิ่งแวดล้อม" },
   ];
 
   const IMPACT_CHART = [
@@ -725,15 +725,19 @@ $("#profileNextLevelPoints").textContent =
   }
 
   /* ---------------- Marketplace ---------------- */
+  let activeProductImages = [];
+
   function renderMarketplace() {
     const grid = $("#marketGrid");
     grid.innerHTML = "";
     PRODUCTS.forEach(p => {
+      const images = (p.images || []).filter(Boolean).slice(0, 4);
+      const primaryImage = images[0] || "";
       const el = document.createElement("div");
       el.className = "product-card";
       el.innerHTML = `
         <div class="product-card__img">
-          <img src="${p.image}" alt="${p.name}" loading="lazy">
+          <img src="${primaryImage}" alt="${p.name}" loading="lazy">
         </div>
         <div class="product-card__body">
           <h3>${p.name}</h3>
@@ -747,11 +751,54 @@ $("#profileNextLevelPoints").textContent =
   }
 
   function openProductModal(p) {
-    $("#productModalImg").innerHTML = `<img src="${p.image}" alt="${p.name}">`;
+    activeProductImages = (p.images || []).filter(Boolean).slice(0, 4);
+    const gallery = $("#productModalGallery");
+    gallery.innerHTML = "";
+
+    const mainImage = document.createElement("button");
+    mainImage.type = "button";
+    mainImage.className = "product-gallery__main";
+    mainImage.setAttribute("aria-label", "ขยายภาพสินค้า");
+    const mainImg = document.createElement("img");
+    mainImg.src = activeProductImages[0] || "";
+    mainImg.alt = p.name;
+    mainImage.appendChild(mainImg);
+    mainImage.addEventListener("click", () => openProductImageZoom(mainImg.src, p.name));
+    gallery.appendChild(mainImage);
+
+    if (activeProductImages.length > 1) {
+      const thumbs = document.createElement("div");
+      thumbs.className = "product-gallery__thumbs";
+      activeProductImages.forEach((src, index) => {
+        const thumb = document.createElement("button");
+        thumb.type = "button";
+        thumb.className = "product-gallery__thumb" + (index === 0 ? " is-active" : "");
+        thumb.setAttribute("aria-label", `ดูภาพที่ ${index + 1}`);
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = `${p.name} ภาพที่ ${index + 1}`;
+        thumb.appendChild(img);
+        thumb.addEventListener("click", () => {
+          mainImg.src = src;
+          thumbs.querySelectorAll(".product-gallery__thumb").forEach((item, i) => {
+            item.classList.toggle("is-active", i === index);
+          });
+        });
+        thumbs.appendChild(thumb);
+      });
+      gallery.appendChild(thumbs);
+    }
+
     $("#productModalName").textContent = p.name;
     $("#productModalDesc").textContent = p.desc;
     $("#productModalPrice").textContent = p.price.toLocaleString("th-TH") + " บาท";
     openModal("productModal");
+  }
+
+  function openProductImageZoom(src, alt) {
+    $("#productImageZoomImg").src = src;
+    $("#productImageZoomImg").alt = alt;
+    openModal("productImageZoom");
   }
 
   /* ---------------- Impact dashboard ---------------- */
