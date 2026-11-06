@@ -170,11 +170,11 @@ async function ensureProfile() {
   };
 
   const PRODUCTS = [
-    { id: "bottle", icon: "🌿", name: "แก้วน้ำรักษ์โลก", price: 199, desc: "แก้วน้ำสแตนเลสรักษ์โลก เก็บความเย็นได้นาน ลดการใช้ขวดพลาสติก" },
-    { id: "totebag", icon: "👜", name: "ถุงผ้า", price: 129, desc: "ถุงผ้าดีไซน์น่ารัก ใช้แทนถุงพลาสติกได้ทุกโอกาส" },
-    { id: "lunchbox", icon: "🍱", name: "กล่องอาหาร", price: 249, desc: "กล่องอาหารรักษ์โลก ปลอดสาร ใช้ซ้ำได้นาน" },
-    { id: "shirt", icon: "👕", name: "เสื้อผ้าสไตล์น่ารัก", price: 350, desc: "เสื้อยืดลายเอกลักษณ์ Eco Steps ผลิตจากผ้าฝ้ายรักษ์โลก" },
-    { id: "notebook", icon: "📓", name: "สมุดรีไซเคิล", price: 59, desc: "สมุดทำจากกระดาษรีไซเคิล 100% เป็นมิตรกับสิ่งแวดล้อม" },
+    { id: "bottle", image: "assets/products/bottle.jpg", name: "แก้วน้ำรักษ์โลก", price: 199, desc: "แก้วน้ำสแตนเลสรักษ์โลก เก็บความเย็นได้นาน ลดการใช้ขวดพลาสติก" },
+    { id: "totebag", image: "assets/products/totebag.jpg", name: "ถุงผ้า", price: 129, desc: "ถุงผ้าดีไซน์น่ารัก ใช้แทนถุงพลาสติกได้ทุกโอกาส" },
+    { id: "lunchbox", image: "assets/products/lunchbox.jpg", name: "กล่องอาหาร", price: 249, desc: "กล่องอาหารรักษ์โลก ปลอดสาร ใช้ซ้ำได้นาน" },
+    { id: "shirt", image: "assets/products/shirt.jpg", name: "เสื้อผ้าสไตล์น่ารัก", price: 350, desc: "เสื้อยืดลายเอกลักษณ์ Eco Steps ผลิตจากผ้าฝ้ายรักษ์โลก" },
+    { id: "notebook", image: "assets/products/notebook.jpg", name: "สมุดรีไซเคิล", price: 59, desc: "สมุดทำจากกระดาษรีไซเคิล 100% เป็นมิตรกับสิ่งแวดล้อม" },
   ];
 
   const IMPACT_CHART = [
@@ -732,7 +732,9 @@ $("#profileNextLevelPoints").textContent =
       const el = document.createElement("div");
       el.className = "product-card";
       el.innerHTML = `
-        <div class="product-card__img">${p.icon}</div>
+        <div class="product-card__img">
+          <img src="${p.image}" alt="${p.name}" loading="lazy">
+        </div>
         <div class="product-card__body">
           <h3>${p.name}</h3>
           <span class="product-card__price">${p.price.toLocaleString("th-TH")} บาท</span>
@@ -745,7 +747,7 @@ $("#profileNextLevelPoints").textContent =
   }
 
   function openProductModal(p) {
-    $("#productModalImg").textContent = p.icon;
+    $("#productModalImg").innerHTML = `<img src="${"${p.image}"}" alt="${"${p.name}"}">`;
     $("#productModalName").textContent = p.name;
     $("#productModalDesc").textContent = p.desc;
     $("#productModalPrice").textContent = p.price.toLocaleString("th-TH") + " บาท";
