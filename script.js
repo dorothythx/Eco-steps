@@ -393,7 +393,7 @@ async function ensureProfile() {
   $$("[data-close]").forEach(btn => {
     btn.addEventListener("click", () => closeModal(btn.dataset.close));
   });
-  $(".modal-backdrop, .popup-backdrop").forEach(backdrop => {
+  $$(".modal-backdrop, .popup-backdrop").forEach(backdrop => {
     backdrop.addEventListener("click", (e) => {
       // หน้าต่างยืนยันส่งภารกิจต้องกดปุ่ม "ตกลง" เท่านั้น
       if (e.target === backdrop && backdrop.id !== "missionSuccessPopup") {
