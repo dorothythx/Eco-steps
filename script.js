@@ -936,7 +936,7 @@ $("#profileNextLevelPoints").textContent =
 
   /* ---------------- Impact dashboard ---------------- */
   let impactAnimated = false;
-  
+
 async function renderImpact() {
   const studentEl = $("#impactStudentCount");
   const missionEl = $("#impactMissionCount");
