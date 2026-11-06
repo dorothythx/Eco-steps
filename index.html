@@ -129,7 +129,7 @@
       <label class="field-label" for="missionDesc">คำอธิบาย</label>
       <textarea id="missionDesc" rows="4" placeholder="เล่าให้เราฟังว่าคุณทำภารกิจนี้อย่างไร..."></textarea>
 
-      <button type="submit" class="btn btn--primary btn--lg btn--block">ส่งภารกิจ 🎉</button>
+      <button type="submit" id="submitMissionBtn" class="btn btn--primary btn--lg btn--block">ส่งภารกิจ 🎉</button>
     </form>
   </section>
 
@@ -151,7 +151,7 @@
 
     <div class="profile-grid">
       <div class="card profile-card">
-        <div class="avatar-circle avatar-circle--big" id="profileAvatar">🧑</div>
+        <div class="avatar-circle avatar-circle--big" id="profileAvatar"><img src="assets/avatars/avatar-male.svg" alt="รูปโปรไฟล์"></div>
         <h2 id="profileName">เรียนดี รักษ์สิ่งแวดล้อม</h2>
         <p id="profileClass">ชั้น ม.5/1</p>
         <p class="muted" id="profileStudentCode">รหัส Demo: DEMO001</p>
@@ -159,8 +159,8 @@
         <div class="avatar-select">
           <span class="field-label">เลือก Avatar</span>
           <div class="avatar-options">
-            <button class="avatar-option" data-avatar="male" id="avatarMaleBtn">🧑</button>
-            <button class="avatar-option" data-avatar="female" id="avatarFemaleBtn">👧</button>
+            <button class="avatar-option" data-avatar="male" id="avatarMaleBtn" type="button" aria-label="เลือกภาพโปรไฟล์แบบที่หนึ่ง"><img src="assets/avatars/avatar-male.svg" alt="ภาพโปรไฟล์แบบที่หนึ่ง"></button>
+            <button class="avatar-option" data-avatar="female" id="avatarFemaleBtn" type="button" aria-label="เลือกภาพโปรไฟล์แบบที่สอง"><img src="assets/avatars/avatar-female.svg" alt="ภาพโปรไฟล์แบบที่สอง"></button>
           </div>
         </div>
       </div>
@@ -308,11 +308,11 @@
 <div class="toast" id="toast"></div>
 
 <div class="popup-backdrop" id="missionSuccessPopup">
-  <div class="popup popup--success">
-    <div class="popup__burst">🎉</div>
-    <h2>ส่งภารกิจสำเร็จ 🎉</h2>
-    <p id="missionSuccessPoints">+5 คะแนน</p>
-    <button class="btn btn--primary btn--block" data-close="missionSuccessPopup">เยี่ยมเลย!</button>
+  <div class="popup popup--success popup--mission-thanks">
+    <img class="mission-thanks__logo" src="assets/logo.png" alt="Eco Steps logo">
+    <h2>ส่งภารกิจเรียบร้อยแล้ว 🌱</h2>
+    <p id="missionSuccessMessage">ขอบคุณที่ร่วมดูแลโลกของเรา</p>
+    <button class="btn btn--primary btn--block" id="missionSuccessConfirm" type="button" data-close="missionSuccessPopup">ตกลง</button>
   </div>
 </div>
 
