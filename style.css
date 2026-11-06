@@ -1333,3 +1333,62 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
   padding: 16px;
   line-height: 1.55;
 }
+
+
+/* ===== Illustrated profile avatars ===== */
+#profileAvatar {
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#profileAvatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 104px;
+  padding: 8px;
+  cursor: pointer;
+}
+.avatar-option img {
+  display: block;
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+.avatar-option:focus-visible {
+  outline: 3px solid var(--leaf);
+  outline-offset: 3px;
+}
+
+/* ===== Mission submission thank-you popup ===== */
+.popup--mission-thanks {
+  text-align: center;
+  padding: 30px 26px 26px;
+}
+.mission-thanks__logo {
+  display: block;
+  width: 104px;
+  height: 104px;
+  object-fit: contain;
+  margin: 0 auto 14px;
+  border-radius: 22px;
+}
+#missionSuccessMessage {
+  color: var(--forest);
+  line-height: 1.75;
+  margin: 12px 0 22px;
+}
+#submitMissionBtn:disabled {
+  opacity: .72;
+  cursor: wait;
+  transform: none;
+}
