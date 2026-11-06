@@ -547,12 +547,13 @@ async function loadMissionsFromSupabase() {
   console.log("โหลดภารกิจจาก Supabase สำเร็จ:", data);
 
   MISSIONS = data.map((mission, index) => ({
-    id: mission.id,
-    icon: ["🗑️", "🧴", "🧃", "💡", "🧹", "📄", "🚿", "🔌"][index] || "🌱",
-    name: mission.title,
-    desc: mission.description,
-    diff: "ง่าย"
-  }));
+  id: mission.id,
+  dbId: mission.id,
+  icon: ["🗑️", "🧴", "🧃", "💡", "🧹", "📄", "🚿", "🔌"][index] || "🌱",
+  name: mission.title,
+  desc: mission.description,
+  diff: "ง่าย"
+}));
 
   // รีเฟรชหน้าที่กำลังเปิดอยู่ตอนนี้ ให้ใช้ภารกิจชุดจริงจาก Supabase ทันที
   const activePage = document.querySelector(".page.active")?.dataset.page;
