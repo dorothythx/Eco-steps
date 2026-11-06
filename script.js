@@ -68,15 +68,15 @@ async function ensureProfile() {
 
   /* ---------------- Data ---------------- */
   let MISSIONS = [
-    { id: "sort-trash", icon: "🗑️", name: "แยกขยะก่อนทิ้ง", desc: "แยกขยะรีไซเคิล ขยะเปียก และขยะทั่วไปให้ถูกประเภทก่อนทิ้ง", diff: "ง่าย" },
-    { id: "reduce-plastic", icon: "🧴", name: "ลดการใช้พลาสติก", desc: "หลีกเลี่ยงถุงพลาสติกและบรรจุภัณฑ์แบบใช้ครั้งเดียวทิ้ง", diff: "ปานกลาง" },
-    { id: "bring-bottle", icon: "🧃", name: "พกขวดน้ำส่วนตัว", desc: "พกขวดน้ำของตัวเองแทนการซื้อน้ำขวดพลาสติก", diff: "ง่าย" },
-    { id: "turn-off-lights", icon: "💡", name: "ปิดไฟเมื่อไม่ใช้งาน", desc: "ปิดไฟและเครื่องใช้ไฟฟ้าทุกครั้งที่ไม่ใช้งาน", diff: "ง่าย" },
-    { id: "clean-school", icon: "🧹", name: "เก็บขยะบริเวณโรงเรียน", desc: "ช่วยกันเก็บขยะบริเวณโรงเรียนให้สะอาดน่าอยู่", diff: "ปานกลาง" },
-    { id: "use-paper-wisely", icon: "📄", name: "ใช้กระดาษอย่างคุ้มค่า", desc: "ใช้กระดาษสองหน้าและลดการพิมพ์ที่ไม่จำเป็น", diff: "ง่าย" },
-    { id: "save-water", icon: "🚿", name: "ประหยัดน้ำ", desc: "ปิดก๊อกน้ำระหว่างแปรงฟันและใช้น้ำอย่างรู้คุณค่า", diff: "ปานกลาง" },
-    { id: "save-energy", icon: "🔌", name: "ลดการใช้พลังงาน", desc: "ถอดปลั๊กเครื่องใช้ไฟฟ้าที่ไม่ใช้งานเพื่อลดพลังงานสูญเปล่า", diff: "ยาก" },
-  ];
+  { id: "sort-trash", dbId: 1, icon: "🗑️", name: "แยกขยะก่อนทิ้ง", desc: "แยกขยะรีไซเคิล ขยะเปียก และขยะทั่วไปให้ถูกประเภทก่อนทิ้ง", diff: "ง่าย" },
+  { id: "reduce-plastic", dbId: 2, icon: "🧴", name: "ลดการใช้พลาสติก", desc: "หลีกเลี่ยงถุงพลาสติกและบรรจุภัณฑ์แบบใช้ครั้งเดียวทิ้ง", diff: "ปานกลาง" },
+  { id: "bring-bottle", dbId: 3, icon: "🧃", name: "พกขวดน้ำส่วนตัว", desc: "พกขวดน้ำของตัวเองแทนการซื้อน้ำขวดพลาสติก", diff: "ง่าย" },
+  { id: "turn-off-lights", dbId: 4, icon: "💡", name: "ปิดไฟเมื่อไม่ใช้งาน", desc: "ปิดไฟและเครื่องใช้ไฟฟ้าทุกครั้งที่ไม่ใช้งาน", diff: "ง่าย" },
+  { id: "clean-school", dbId: 5, icon: "🧹", name: "เก็บขยะบริเวณโรงเรียน", desc: "ช่วยกันเก็บขยะบริเวณโรงเรียนให้สะอาดน่าอยู่", diff: "ปานกลาง" },
+  { id: "use-paper-wisely", dbId: 6, icon: "📄", name: "ใช้กระดาษอย่างคุ้มค่า", desc: "ใช้กระดาษสองหน้าและลดการพิมพ์ที่ไม่จำเป็น", diff: "ง่าย" },
+  { id: "save-water", dbId: 7, icon: "🚿", name: "ประหยัดน้ำ", desc: "ปิดก๊อกน้ำระหว่างแปรงฟันและใช้น้ำอย่างรู้คุณค่า", diff: "ปานกลาง" },
+  { id: "save-energy", dbId: 8, icon: "🔌", name: "ลดการใช้พลังงาน", desc: "ถอดปลั๊กเครื่องใช้ไฟฟ้าที่ไม่ใช้งานเพื่อลดพลังงานสูญเปล่า", diff: "ยาก" },
+];
 
   const REWARDS = [
     { level: 3, title: "โปรไฟล์ใหม่", icon: "👤" },
@@ -637,11 +637,19 @@ async function loadMissionsFromSupabase() {
       const userId = sessionData.session.user.id;
       const description = $("#missionDesc")?.value?.trim() || "";
 
+const selectedMission = MISSIONS.find(
+  m => m.id === submitCtx.missionId
+);
+
+if (!selectedMission || !selectedMission.dbId) {
+  throw new Error("ไม่พบรหัสภารกิจในฐานข้อมูล");
+}
+
       const { data, error } = await supabaseClient
         .from("submissions")
         .insert({
           user_id: userId,
-          mission_id: submitCtx.missionId,
+          mission_id: selectedMission.dbId,
           before_image: submitCtx.beforeData || "",
           after_image: submitCtx.afterData || "",
           description,
