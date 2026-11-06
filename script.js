@@ -331,7 +331,7 @@ async function ensureProfile() {
 
   const pages = $$(".page");
   const navBtns = $$("[data-nav]");
-  const submitCtx = { missionId: null, beforeData: null, afterData: null };
+  const submitCtx = { missionId: null, beforeData: null, afterData: null, isSubmitting: false };
 
   /* ---------------- Routing ---------------- */
   function navigate(pageName, opts) {
@@ -563,6 +563,9 @@ async function loadMissionsFromSupabase() {
     submitCtx.missionId = mission.id;
     submitCtx.beforeData = null;
     submitCtx.afterData = null;
+    submitCtx.isSubmitting = false;
+    submitButton.disabled = false;
+    submitButton.textContent = "ส่งภารกิจ 🎉";
 
     $("#submitTitle").textContent = "ส่งภารกิจ: " + mission.name;
     $("#submitDesc").textContent = mission.desc;
@@ -591,53 +594,87 @@ async function loadMissionsFromSupabase() {
   handleImagePreview($("#beforeImg"), $("#beforePreview"), "beforeData");
   handleImagePreview($("#afterImg"), $("#afterPreview"), "afterData");
 
-  $("#submitForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+  const submitForm = $("#submitForm");
+  const submitButton = $("#submitMissionBtn");
+  const missionThanksMessages = [
+    "ทุกการลงมือเล็ก ๆ คือพลังยิ่งใหญ่ในการดูแลโลก ขอบคุณที่เริ่มต้นวันนี้ 🌱",
+    "ขอบคุณที่เปลี่ยนความตั้งใจให้กลายเป็นการกระทำ โลกน่าอยู่ขึ้นเพราะคุณ 🌍",
+    "หนึ่งภารกิจของคุณ คืออีกหนึ่งก้าวสู่อนาคตที่เขียวกว่าเดิม ขอบคุณนะ 💚",
+    "ขอบคุณที่ไม่มองข้ามสิ่งเล็ก ๆ เพราะการเปลี่ยนแปลงเริ่มได้จากเรา 🍃",
+    "โลกใบนี้ขอขอบคุณที่คุณลงมือดูแลมัน แล้วมาสร้างเรื่องดี ๆ ไปด้วยกัน 🌳"
+  ];
 
-  if (!submitCtx.missionId) {
-    alert("กรุณาเลือกภารกิจก่อนส่ง");
-    return;
-  }
+  submitForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const { data: sessionData } = await supabaseClient.auth.getSession();
+    if (submitCtx.isSubmitting) return;
 
-  if (!sessionData.session) {
-    alert("ไม่พบผู้ใช้งาน กรุณาเข้าสู่ระบบก่อนส่งภารกิจ");
-    const loginScreen = document.getElementById("loginScreen");
-    if (loginScreen) loginScreen.style.display = "";
-    return;
-  }
+    if (!submitCtx.missionId) {
+      alert("กรุณาเลือกภารกิจก่อนส่ง");
+      return;
+    }
 
-  const userId = sessionData.session.user.id;
+    submitCtx.isSubmitting = true;
+    submitButton.disabled = true;
+    submitButton.textContent = "กำลังส่งภารกิจ…";
 
-  const description =
-  $("#missionDesc")?.value?.trim() || "";
+    try {
+      const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
 
-  const { data, error } = await supabaseClient
-    .from("submissions")
-    .insert({
-      user_id: userId,
-      mission_id: submitCtx.missionId,
-      before_image: submitCtx.beforeData || "",
-      after_image: submitCtx.afterData || "",
-      description: description,
-      status: "pending"
-    })
-    .select()
-    .single();
+      if (sessionError || !sessionData.session) {
+        alert("ไม่พบผู้ใช้งาน กรุณาเข้าสู่ระบบก่อนส่งภารกิจ");
+        const loginScreen = document.getElementById("loginScreen");
+        if (loginScreen) loginScreen.style.display = "";
+        submitCtx.isSubmitting = false;
+        submitButton.disabled = false;
+        submitButton.textContent = "ส่งภารกิจ 🎉";
+        return;
+      }
 
-  if (error) {
-    console.error("ส่งภารกิจไม่สำเร็จ:", error);
-    alert("ส่งภารกิจไม่สำเร็จ กรุณาลองใหม่");
-    return;
-  }
+      const userId = sessionData.session.user.id;
+      const description = $("#missionDesc")?.value?.trim() || "";
 
-  console.log("ส่งภารกิจเข้า Supabase สำเร็จ:", data);
+      const { data, error } = await supabaseClient
+        .from("submissions")
+        .insert({
+          user_id: userId,
+          mission_id: submitCtx.missionId,
+          before_image: submitCtx.beforeData || "",
+          after_image: submitCtx.afterData || "",
+          description,
+          status: "pending"
+        })
+        .select()
+        .single();
 
-  alert("ส่งภารกิจเรียบร้อยแล้ว! 🌱 รอการตรวจสอบจากผู้ดูแล");
+      if (error) throw error;
 
-  closeModal("submitModal");
-});
+      console.log("ส่งภารกิจเข้า Supabase สำเร็จ:", data);
+
+      const message = missionThanksMessages[
+        Math.floor(Math.random() * missionThanksMessages.length)
+      ];
+      $("#missionSuccessMessage").textContent = message;
+      openModal("missionSuccessPopup");
+    } catch (error) {
+      console.error("ส่งภารกิจไม่สำเร็จ:", error);
+      alert("ส่งภารกิจไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");
+      submitCtx.isSubmitting = false;
+      submitButton.disabled = false;
+      submitButton.textContent = "ส่งภารกิจ 🎉";
+    }
+  });
+
+  $("#missionSuccessConfirm").addEventListener("click", () => {
+    submitCtx.isSubmitting = false;
+    submitCtx.missionId = null;
+    submitCtx.beforeData = null;
+    submitCtx.afterData = null;
+    submitForm.reset();
+    submitButton.disabled = false;
+    submitButton.textContent = "ส่งภารกิจ 🎉";
+    navigate("mission");
+  });
 
   function completeMission(missionId) {
     const mission = MISSIONS.find(m => m.id === missionId);
@@ -759,7 +796,12 @@ $("#profileNextLevelPoints").textContent =
     $("#profileRewardCount").textContent = unlocked.length;
 
     // --- Avatar: ซิงก์มาจาก Supabase ใน loadProfileFromSupabase() แล้ว (เข้า state.avatar) ---
-    $("#profileAvatar").textContent = state.avatar === "female" ? "👧" : "🧑";
+    const avatarImage = state.avatar === "female"
+      ? "assets/avatars/avatar-female.svg"
+      : "assets/avatars/avatar-male.svg";
+    $("#profileAvatar").innerHTML = `<img src="${avatarImage}" alt="รูปโปรไฟล์">`;
+    $("#avatarMaleBtn").querySelector("img").src = "assets/avatars/avatar-male.svg";
+    $("#avatarFemaleBtn").querySelector("img").src = "assets/avatars/avatar-female.svg";
 
     $("#avatarMaleBtn").classList.toggle("selected", state.avatar === "male");
     $("#avatarFemaleBtn").classList.toggle("selected", state.avatar === "female");
@@ -780,11 +822,27 @@ $("#profileNextLevelPoints").textContent =
 
   $("#avatarMaleBtn").addEventListener("click", () => setAvatar("male"));
   $("#avatarFemaleBtn").addEventListener("click", () => setAvatar("female"));
-  function setAvatar(type) {
+  async function setAvatar(type) {
+    if (type !== "male" && type !== "female") return;
     state.avatar = type;
     saveState();
     renderProfile();
-    showToast("เปลี่ยน Avatar เรียบร้อยแล้ว 🧑‍🎓");
+
+    if (currentProfile && currentProfile.id) {
+      const { error } = await supabaseClient
+        .from("profiles")
+        .update({ avatar: type })
+        .eq("id", currentProfile.id);
+
+      if (error) {
+        console.error("บันทึกรูปโปรไฟล์ไม่สำเร็จ:", error);
+        showToast("เปลี่ยนรูปแล้ว แต่บันทึกลงบัญชีไม่สำเร็จ");
+        return;
+      }
+      currentProfile.avatar = type;
+    }
+
+    showToast("เปลี่ยนรูปโปรไฟล์เรียบร้อยแล้ว 🌿");
   }
 
   /* ---------------- Marketplace ---------------- */
