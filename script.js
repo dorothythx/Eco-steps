@@ -215,11 +215,11 @@ async function ensureProfile() {
   function getLevel(points) { return Math.floor(points / POINTS_PER_LEVEL) + 1; }
   function getProgressInLevel(points) { return points % POINTS_PER_LEVEL; }
   function getUnlockedRewards() {
-    const lvl = getLevel(state.points);
+    const lvl = getLevel(getDisplayPoints());
     return REWARDS.filter(r => r.level <= lvl);
   }
   function getNextReward() {
-    const lvl = getLevel(state.points);
+    const lvl = getLevel(getDisplayPoints());
     return REWARDS.find(r => r.level > lvl) || null;
   }
 
@@ -228,11 +228,14 @@ async function ensureProfile() {
      student_code, avatar, points) ใช้แสดงในหน้า Profile และเป็นแหล่งคะแนนหลัก
      ของทั้งแอป แทนคะแนน Demo เดิมใน localStorage */
   let currentProfile = null;
+  let approvedMissionCount = null;
 
   async function loadProfileFromSupabase() {
     const { data: sessionData } = await supabaseClient.auth.getSession();
     if (!sessionData || !sessionData.session) {
       currentProfile = null;
+      approvedMissionCount = null;
+      updateTopPoints();
       return null;
     }
 
@@ -247,10 +250,28 @@ async function ensureProfile() {
     if (error) {
       console.error("โหลด Profile จาก Supabase ไม่สำเร็จ:", error);
       currentProfile = null;
+      approvedMissionCount = null;
+      updateTopPoints();
       return null;
     }
 
     currentProfile = data;
+
+    // นับเฉพาะภารกิจที่ผู้ดูแลอนุมัติแล้วของผู้ใช้คนนี้
+    const { count, error: missionCountError } = await supabaseClient
+      .from("submissions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "approved");
+
+    if (missionCountError) {
+      console.error("นับภารกิจที่อนุมัติแล้วไม่สำเร็จ:", missionCountError);
+      approvedMissionCount = null;
+    } else {
+      approvedMissionCount = count ?? 0;
+    }
+
+    updateTopPoints();
 
     // ซิงก์ avatar จาก Supabase เข้ากับ state เดิม (ยังใช้ path เดิมในการแสดงผล)
     if (currentProfile && (currentProfile.avatar === "male" || currentProfile.avatar === "female")) {
@@ -264,9 +285,15 @@ async function ensureProfile() {
   // แหล่งคะแนนหลักของทั้งแอป: ใช้ profiles.points จาก Supabase ถ้ามี
   // ถ้ายังโหลดไม่เสร็จ/ไม่มี session ค่อย fallback ไปคะแนน Demo เดิม
   function getDisplayPoints() {
-    return (currentProfile && typeof currentProfile.points === "number")
-      ? currentProfile.points
-      : state.points;
+    if (
+      currentProfile &&
+      currentProfile.points !== null &&
+      currentProfile.points !== undefined &&
+      Number.isFinite(Number(currentProfile.points))
+    ) {
+      return Number(currentProfile.points);
+    }
+    return state.points;
   }
 
   /* ---------------- DOM refs ---------------- */
@@ -398,7 +425,7 @@ async function ensureProfile() {
 
   /* ---------------- Dashboard ---------------- */
   function renderDashboard() {
-    const lvl = getLevel(state.points);
+    const lvl = getLevel(getDisplayPoints());
     const inLevel = getProgressInLevel(getDisplayPoints());
     $("#dashLevel").textContent = lvl;
     $("#dashPoints").textContent = getDisplayPoints();
@@ -619,10 +646,16 @@ async function loadMissionsFromSupabase() {
   function showLevelUp(newLevel) {
     $("#levelUpNumber").textContent = newLevel;
     const reward = REWARDS.find(r => r.level === newLevel);
+    const isCertificate = reward && reward.title.includes("เกียรติบัตร");
+
     $("#levelUpReward").innerHTML = reward
-      ? `${reward.icon} ปลดล็อกแล้ว: ${reward.title}`
+      ? isCertificate
+        ? `${reward.icon} ปลดล็อกแล้ว: ${reward.title}`
+        : `${reward.icon} ${reward.title}<br><span class="levelup-development-note">รางวัลนี้กำลังอยู่ระหว่างการพัฒนา 🌱<br>ทีมงานกำลังเตรียมสิทธิพิเศษให้พร้อมใช้งาน โปรดติดตามการอัปเดตครั้งถัดไปนะ</span>`
       : "";
+
     const popup = $("#levelUpPopup");
+    popup.classList.toggle("popup--development", !!reward && !isCertificate);
     popup.classList.add("show");
     popup.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", function handler() {
       popup.classList.remove("show");
@@ -691,7 +724,8 @@ $("#profileNextLevelPoints").textContent =
     : pointsToNextLevel;
 
     // --- Level / Rewards: ยังคงใช้ระบบเดิมตาม state.points (นอก scope งานนี้) ---
-    $("#profileMissionCount").textContent = state.missionsCompleted;
+    $("#profileMissionCount").textContent =
+      approvedMissionCount === null ? "—" : approvedMissionCount;
     const unlocked = getUnlockedRewards();
     $("#profileRewardCount").textContent = unlocked.length;
 
@@ -917,8 +951,8 @@ async function handleLogin() {
 
   console.log("เข้าสู่ระบบสำเร็จ:", userId);
 
-  // พาเข้าหน้า Dashboard ทันทีหลังล็อกอินสำเร็จ
-  navigate("dashboard");
+  // เข้าหน้าหลักทันทีหลังล็อกอินสำเร็จ
+  navigate("home");
 }
 
 document.getElementById("loginForm")?.addEventListener("submit", (e) => {
@@ -929,7 +963,7 @@ document.getElementById("loginForm")?.addEventListener("submit", (e) => {
 /* ---------------- Init ---------------- */
 
 async function init() {
-  updateTopPoints();
+  $("#topPoints").textContent = "กำลังโหลด…";
   renderHeroTrail();
 
   navBtns.forEach(b =>
@@ -956,8 +990,8 @@ async function init() {
     saveState();
 
     await ensureProfile();
-    await loadProfileFromSupabase(); // โหลดคะแนน/ข้อมูลจริงจาก Supabase ก่อนพาเข้า Dashboard
-    navigate("dashboard");
+    await loadProfileFromSupabase(); // โหลดคะแนนและข้อมูลผู้ใช้ให้เสร็จก่อนแสดงหน้าเว็บ
+    renderAndGo("home");
   } else {
     // ไม่มี session จริง -> ล้าง flag เก่าทิ้ง แล้วโชว์หน้า login ให้กรอกใหม่
     localStorage.removeItem("ecosteps_logged_in");
