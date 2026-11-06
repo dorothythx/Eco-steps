@@ -1287,3 +1287,49 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 @media (max-width: 480px) {
   .product-gallery__main { height: 200px; }
 }
+
+
+/* =========================================================
+   🌱 LEVEL-UP DEVELOPMENT NOTICE
+   ========================================================= */
+#levelUpPopup .popup {
+  position: relative;
+}
+
+#levelUpPopup .popup__close {
+  position: absolute;
+  top: 13px;
+  right: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.82);
+  color: var(--forest);
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(27,67,50,.1);
+}
+
+#levelUpPopup .popup__close:hover {
+  background: #fff;
+  transform: scale(1.05);
+}
+
+#levelUpPopup .levelup-development-note {
+  display: block;
+  margin-top: 9px;
+  font-size: .88rem;
+  line-height: 1.65;
+  font-weight: 500;
+  color: var(--forest);
+}
+
+#levelUpPopup.popup--development .popup__reward {
+  padding: 16px;
+  line-height: 1.55;
+}
