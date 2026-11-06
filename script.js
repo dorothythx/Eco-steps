@@ -747,7 +747,7 @@ $("#profileNextLevelPoints").textContent =
   }
 
   function openProductModal(p) {
-    $("#productModalImg").innerHTML = `<img src="${"${p.image}"}" alt="${"${p.name}"}">`;
+    $("#productModalImg").innerHTML = `<img src="${p.image}" alt="${p.name}">`;
     $("#productModalName").textContent = p.name;
     $("#productModalDesc").textContent = p.desc;
     $("#productModalPrice").textContent = p.price.toLocaleString("th-TH") + " บาท";
