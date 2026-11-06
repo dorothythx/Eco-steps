@@ -260,6 +260,32 @@ async function ensureProfile() {
     // อัปเดตคะแนนทันทีเมื่อข้อมูลโปรไฟล์มาถึง ไม่ต้องรอ query จำนวนภารกิจ
     updateTopPoints();
 
+    // ตรวจจับการเลื่อน Level จากคะแนนที่ผู้ดูแลอนุมัติในครั้งก่อน
+    const currentPoints = getDisplayPoints();
+    const lastPointsKey = `ecosteps_last_seen_points_${userId}`;
+    const lastPointsRaw = localStorage.getItem(lastPointsKey);
+
+    if (lastPointsRaw !== null) {
+      const previousPoints = Number(lastPointsRaw);
+      if (
+        Number.isFinite(previousPoints) &&
+        getLevel(currentPoints) > getLevel(previousPoints)
+      ) {
+        const newlyReachedRewards = REWARDS.filter(reward =>
+          reward.level > getLevel(previousPoints) &&
+          reward.level <= getLevel(currentPoints)
+        );
+        const latestReward = newlyReachedRewards[newlyReachedRewards.length - 1];
+
+        if (latestReward) {
+          const activePage = document.querySelector(".page.active")?.dataset.page || "home";
+          showLevelUp(latestReward.level, activePage);
+        }
+      }
+    }
+
+    localStorage.setItem(lastPointsKey, String(currentPoints));
+
     // นับเฉพาะภารกิจที่ผู้ดูแลอนุมัติแล้วของผู้ใช้คนนี้
     const { count, error: missionCountError } = await supabaseClient
       .from("submissions")
@@ -646,7 +672,7 @@ async function loadMissionsFromSupabase() {
     $("#missionSuccessPopup").querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", closeSuccess, { once: true }));
   }
 
-  function showLevelUp(newLevel) {
+  function showLevelUp(newLevel, returnPage) {
     $("#levelUpNumber").textContent = newLevel;
     const reward = REWARDS.find(r => r.level === newLevel);
     const isCertificate = reward && reward.title.includes("เกียรติบัตร");
@@ -662,7 +688,7 @@ async function loadMissionsFromSupabase() {
     popup.classList.add("show");
     popup.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", function handler() {
       popup.classList.remove("show");
-      navigate("mission");
+      navigate(returnPage || "mission");
       b.removeEventListener("click", handler);
     }, { once: true }));
   }
