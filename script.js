@@ -257,6 +257,9 @@ async function ensureProfile() {
 
     currentProfile = data;
 
+    // อัปเดตคะแนนทันทีเมื่อข้อมูลโปรไฟล์มาถึง ไม่ต้องรอ query จำนวนภารกิจ
+    updateTopPoints();
+
     // นับเฉพาะภารกิจที่ผู้ดูแลอนุมัติแล้วของผู้ใช้คนนี้
     const { count, error: missionCountError } = await supabaseClient
       .from("submissions")
