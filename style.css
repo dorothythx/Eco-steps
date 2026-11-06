@@ -1178,3 +1178,28 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
     height: 240px;
   }
 }
+
+/* Marketplace product photos */
+
+#page-marketplace .product-card__img {
+  overflow: hidden;
+}
+#page-marketplace .product-card__img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#page-marketplace .product-card__img::after {
+  content: none;
+}
+.modal__product-img {
+  overflow: hidden;
+}
+.modal__product-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
