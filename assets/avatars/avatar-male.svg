@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+<title id="title">Eco Steps avatar one</title><desc id="desc">Friendly illustrated young person with short dark hair and a green shirt.</desc>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dff5df"/><stop offset="1" stop-color="#b8e5c4"/></linearGradient></defs>
+<circle cx="120" cy="120" r="116" fill="url(#bg)"/><circle cx="38" cy="54" r="12" fill="#fff" opacity=".65"/><circle cx="204" cy="72" r="8" fill="#fff" opacity=".7"/>
+<path d="M43 224c7-42 36-65 77-65s70 23 77 65" fill="#39845b"/><path d="M83 164l37 35 37-35-8-17H91z" fill="#f0b98f"/>
+<path d="M73 103c0-43 20-68 48-68 35 0 51 29 48 70l-7 42c-5 27-23 42-42 42s-38-15-43-42z" fill="#f4c7a2"/>
+<path d="M72 107c-7-42 13-78 50-78 33 0 55 24 49 75-9-7-17-18-20-31-20 17-48 23-79 19z" fill="#3b302e"/><path d="M79 87c-9 13-10 29-8 43-11-6-15-18-11-30 3-9 10-15 19-13zM161 83c12 12 14 28 10 45 10-7 14-19 10-31-3-9-11-15-20-14z" fill="#3b302e"/>
+<ellipse cx="101" cy="112" rx="4" ry="5" fill="#493a34"/><ellipse cx="139" cy="112" rx="4" ry="5" fill="#493a34"/><path d="M108 139q12 9 24 0" fill="none" stroke="#a85d53" stroke-width="4" stroke-linecap="round"/>
+<path d="M79 190q41 20 82 0l15 34H64z" fill="#2e7650"/><path d="M112 184l8 12 8-12" fill="#fff" opacity=".85"/>
+<path d="M36 171c10-11 18-14 27-12M178 48c8-8 16-9 25-5" fill="none" stroke="#72b987" stroke-width="5" stroke-linecap="round"/>
+</svg>
